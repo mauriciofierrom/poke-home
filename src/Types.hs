@@ -41,7 +41,7 @@ data DFQueryResult =
                 , outputContexts :: Maybe DFOutputContext
                 , intent :: Maybe DFIntent
                 , intentDetectionConfidence :: Maybe Float
-                , diagnosticInfo :: Maybe String
+                -- , diagnosticInfo :: Maybe (M.Map String String)
                 , languageCode :: String -- Sum type
                 } deriving (Eq, Generic, Show)
 
@@ -77,8 +77,8 @@ instance FromJSON DFResponse where
 
 instance ToJSON DFResponse where
   toJSON d = object [
-    "fulFillmentText" .= dfrFulfillmentText d,
-    "fullFillmentMessages" .= dfrFulfillmentMessages d,
+    "fulfillmentText" .= dfrFulfillmentText d,
+    "fulfillmentMessages" .= dfrFulfillmentMessages d,
     "source" .= dfrSource d
                     ]
 

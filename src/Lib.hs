@@ -16,6 +16,7 @@ import PokeApi.Type.Queries
 import Servant
 import Servant.API
 import Types
+import DialogFlow.Message.Types
 
 import qualified Data.Text as T
 import qualified Data.Map as M
@@ -48,7 +49,7 @@ createResponse :: [Type'] -> DFResponse
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.intercalate " and " types'
-   in DFResponse (Just $ T.unpack msg) Nothing Nothing
+   in DFResponse (Just $ T.unpack msg) (Just [MText (Just [T.unpack msg])]) Nothing
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
 pokeApiRequest req =
