@@ -27,6 +27,7 @@ dependencies:
 - servant
 - servant-server
 - text
+- transformers
 - unordered-containers
 - warp
 - wai

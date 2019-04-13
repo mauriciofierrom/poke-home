@@ -24,7 +24,6 @@ resolver: lts-13.16
 # Various formats can be used as shown in the example below.
 #
 # packages:
-# - some-directory
 # - https://example.com/foo/bar/baz-0.0.2.tar.gz
 # - location:
 #    git: https://github.com/commercialhaskell/stack.git
@@ -35,6 +34,7 @@ resolver: lts-13.16
 #  - wai
 packages:
 - .
+- pokeapi
 # Dependency packages to be pulled from upstream that are not in the resolver
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)

@@ -77,3 +77,5 @@ instance ToJSON DFResponse where
     "fullFillmentMessages" .= dfrFulfillmentMessages d,
     "source" .= dfrSource d
                     ]
+
+data Qualifier = Weak | Effective deriving (Eq, Show)
