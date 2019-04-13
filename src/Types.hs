@@ -64,7 +64,7 @@ data DFResponse =
   DFResponse { dfrFulfillmentText :: Maybe String
              , dfrFulfillmentMessages :: Maybe [DF.MText] -- check how to use an unified data type
              , dfrSource :: Maybe String
-             -- , dfrPayload :: M.Map String String
+             , dfrPayload :: GooglePayload
              } deriving (Eq, Show)
 
 instance FromJSON DFResponse where
@@ -72,14 +72,37 @@ instance FromJSON DFResponse where
     dfrFulfillmentText <- d .: "fulfillmentText"
     dfrFulfillmentMessages <- d .: "fulfillmentMessages"
     dfrSource <- d .: "source"
-    -- dfrPayload <- d .: "payload"
+    dfrPayload <- d .: "payload"
     return DFResponse{..}
 
 instance ToJSON DFResponse where
   toJSON d = object [
     "fulfillmentText" .= dfrFulfillmentText d,
     "fulfillmentMessages" .= dfrFulfillmentMessages d,
-    "source" .= dfrSource d
+    "source" .= dfrSource d,
+    "payload" .= dfrPayload d
                     ]
 
 data Qualifier = Weak | Effective deriving (Eq, Show)
+
+data GooglePayload = GooglePayload { expectUserResponse :: Bool
+                                   , richResponse :: [DF.SimpleResponse]
+                                   } deriving (Eq, Show)
+
+instance FromJSON GooglePayload where
+  parseJSON = withObject "payload" $ \gp -> do
+    payload <- gp .: "payload"
+    googlePayload <- payload .: "google"
+    expectUserResponse <- googlePayload .: "expectUserResponse"
+    richResponses <- googlePayload .: "richResponse"
+    richResponse <- richResponses .: "items"
+    return GooglePayload{..}
+
+instance ToJSON GooglePayload where
+  toJSON gp =
+    object [ "google" .=
+      object [ "expectUserResponse" .= expectUserResponse gp
+             , "richResponse" .=
+               object [ "items" .= richResponse gp ]
+             ]
+           ]

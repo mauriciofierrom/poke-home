@@ -43,13 +43,15 @@ fulfillment req = do
   types <- liftIO $ pokeApiRequest req
   case types of
     Left err -> error "SomeException"
-    Right types -> return $ createResponse types
+    Right types ->
+      return $ createResponse types
 
 createResponse :: [Type'] -> DFResponse
 createResponse types =
   let types' = fmap getTypeName types
-      msg = T.intercalate " and " types'
-   in DFResponse (Just $ T.unpack msg) (Just [MText (Just [T.unpack msg])]) Nothing
+      msg = T.unpack $ T.intercalate " and " types'
+      payload = GooglePayload False [SimpleResponse (Just msg)]
+   in DFResponse (Just msg) (Just [MText (Just [msg])]) (Just "mauriciofierro.dev") payload
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
 pokeApiRequest req =

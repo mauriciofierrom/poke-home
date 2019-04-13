@@ -5,6 +5,7 @@
 module DialogFlow.Message.Types
   ( Button(..)
   , MText(..)
+  , SimpleResponse(..)
   ) where
 
 import Data.Aeson (FromJSON, parseJSON, ToJSON, toJSON, object, withObject, (.:), (.=))
@@ -44,10 +45,26 @@ data Card = Card { cCardTitle :: Maybe String
                  } deriving (Eq, Generic, Show)
 
 data SimpleResponse =
-  SimpleResponse { textToSpeech :: String -- these fields are mutually exclusive vv
-                 , ssml :: String -- ^^ these fields are mutually exclusive ^^
-                 , displayText :: Maybe String
-                 } deriving (Eq, Generic, Show)
+  SimpleResponse { textToSpeech :: Maybe String -- these fields are mutually exclusive vv
+                 -- , ssml :: Maybe String -- ^^ these fields are mutually exclusive ^^
+                 -- , displayText :: Maybe String
+                 } deriving (Eq, Show)
+
+instance FromJSON SimpleResponse where
+  parseJSON = withObject "simpleResponse" $ \sr -> do
+    simpleResponse <- sr .: "simpleResponse"
+    textToSpeech <- simpleResponse .: "textToSpeech"
+    -- ssml <- simpleResponse .: "ssml"
+    -- displayText <- simpleResponse .: "displayText"
+    return SimpleResponse{..}
+
+instance ToJSON SimpleResponse where
+  toJSON sr =
+    object [ "simpleResponse" .=
+      object [ "textToSpeech" .= textToSpeech sr ]
+             -- , "ssml" .= ssml sr
+             -- , "displayText" .= displayText sr ]
+           ]
 
 data BasicCard =
   BasicCard { bsTitle :: Maybe String
