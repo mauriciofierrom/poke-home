@@ -3,14 +3,16 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Lib
-    ( 
+    (
      app
     ) where
 
-import Control.Monad.Trans.Maybe (runMaybeT, MaybeT(..))
+import Control.Monad.IO.Class (liftIO)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
+import PokeApi.Types
 import PokeApi.Type.Types
+import PokeApi.Type.Queries
 import Servant
 import Servant.API
 import Types
@@ -25,7 +27,7 @@ extractTypeParameter req = do
 
 extractQualifierParameter :: DFRequest -> Maybe Qualifier
 extractQualifierParameter  req = do
-  typeParam <- (M.lookup "Qualifier" . parameters . queryResult) req
+  typeParam <- (M.lookup "Quality" . parameters . queryResult) req
   getQualifier typeParam
     where
       getQualifier :: String -> Maybe Qualifier
@@ -36,7 +38,29 @@ extractQualifierParameter  req = do
 type API = "fulfillment" :> ReqBody '[JSON] DFRequest :> Post '[JSON] DFResponse
 
 fulfillment :: DFRequest -> Handler DFResponse
-fulfillment = undefined
+fulfillment req = do
+  types <- liftIO $ pokeApiRequest req
+  case types of
+    Left err -> error "SomeException"
+    Right types -> return $ createResponse types
+
+createResponse :: [Type'] -> DFResponse
+createResponse types =
+  let types' = fmap getTypeName types
+      msg = T.intercalate " and " types'
+   in DFResponse (Just $ T.unpack msg) Nothing Nothing
+
+pokeApiRequest :: DFRequest -> PokeApi [Type']
+pokeApiRequest req =
+  let typeParam = extractTypeParameter req
+      qualifierParam = extractQualifierParameter req
+   in
+     case (typeParam, qualifierParam) of
+       (Just type', Just qualifier) -> do
+         manager <- liftIO $ newManager tlsManagerSettings
+         case qualifier of
+           Effective -> effectiveAgainst manager type'
+           Weak -> weakAgainst manager type'
 
 server :: Server API
 server = fulfillment

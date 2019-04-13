@@ -24,6 +24,9 @@ dependencies:
 - base >= 4.7 && < 5
 - bytestring
 - containers
+- http-client
+- http-client-tls
+- mtl
 - servant
 - servant-server
 - text
@@ -31,6 +34,7 @@ dependencies:
 - unordered-containers
 - warp
 - wai
+- pokeapi
 
 library:
   source-dirs: src

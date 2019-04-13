@@ -15,7 +15,11 @@ data DFIntent =
            , displayName :: String
            } deriving (Eq, Generic, Show)
 
-instance FromJSON DFIntent
+instance FromJSON DFIntent where
+  parseJSON = withObject "intent" $ \i -> do
+    intentName <- i .: "name"
+    displayName <- i .: "displayName"
+    return DFIntent {..}
 
 data DFOutputContext =
   DFOutputContext { name :: String
@@ -30,14 +34,14 @@ data DFQueryResult =
   DFQueryResult { queryText :: String
                 , parameters :: M.Map String String
                 , allRequiredParamsPresent :: Bool
-                , fulfillmentText :: String
+                , fulfillmentText :: Maybe String
                 -- disabled for now, as it doesn't seem necessary for the
                 -- current implementation
                 -- , fulfillmentMessages :: M.Map String String
-                , outputContexts :: DFOutputContext
-                , intent :: DFIntent
-                , intentDetectionConfidence :: Int
-                , diagnosticInfo :: String
+                , outputContexts :: Maybe DFOutputContext
+                , intent :: Maybe DFIntent
+                , intentDetectionConfidence :: Maybe Float
+                , diagnosticInfo :: Maybe String
                 , languageCode :: String -- Sum type
                 } deriving (Eq, Generic, Show)
 
@@ -47,7 +51,7 @@ data DFRequest =
   DFRequest { responseId :: String
             , session :: String
             , queryResult :: DFQueryResult
-            , originalDetectIntentRequest :: String -- Some kind of object
+            -- , originalDetectIntentRequest :: M.Map String String -- Some kind of object
             } deriving(Eq, Generic, Show)
 
 instance FromJSON DFRequest
