@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Types where
-import Data.Aeson (FromJSON, parseJSON, withObject, (.:))
+import Data.Aeson (FromJSON, parseJSON, ToJSON, toJSON, object, withObject, (.:), (.=))
 import GHC.Generics
 
 import qualified Data.Map as M
@@ -70,3 +70,10 @@ instance FromJSON DFResponse where
     dfrSource <- d .: "source"
     -- dfrPayload <- d .: "payload"
     return DFResponse{..}
+
+instance ToJSON DFResponse where
+  toJSON d = object [
+    "fulFillmentText" .= dfrFulfillmentText d,
+    "fullFillmentMessages" .= dfrFulfillmentMessages d,
+    "source" .= dfrSource d
+                    ]

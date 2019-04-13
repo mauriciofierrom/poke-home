@@ -28,6 +28,7 @@ dependencies:
 - servant-server
 - text
 - unordered-containers
+- warp
 - wai
 
 library:

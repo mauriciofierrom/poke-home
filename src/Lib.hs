@@ -2,10 +2,12 @@
 {-# LANGUAGE TypeOperators #-}
 module Lib
     ( someFunc
+    , app
     ) where
 
 import Servant
 import Servant.API
+import Network.Wai.Handler.Warp
 
 import Types
 
@@ -19,3 +21,9 @@ fulfillment = undefined
 
 server :: Server API
 server = fulfillment
+
+fulFillmentAPI :: Proxy API
+fulFillmentAPI = Proxy
+
+app :: Application
+app = serve fulFillmentAPI server

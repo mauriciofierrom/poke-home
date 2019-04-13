@@ -7,7 +7,8 @@ module DialogFlow.Message.Types
   , MText(..)
   ) where
 
-import Data.Aeson (FromJSON, parseJSON, withObject, (.:))
+import Data.Aeson (FromJSON, parseJSON, ToJSON, toJSON, object, withObject, (.:), (.=))
+import Data.Maybe (catMaybes)
 import GHC.Generics
 
 newtype MText = MText { tText :: Maybe [String] } deriving (Eq, Show)
@@ -17,6 +18,12 @@ instance FromJSON MText where
     firstText <- o .: "text"
     tText <- firstText .: "text"
     return MText{..}
+
+instance ToJSON MText where
+  toJSON t = object [
+    "text" .= object [
+    "text" .= tText t ]
+                    ]
 
 data Image = Image { iImageUri :: Maybe String
                      , accessibilityText :: Maybe String
