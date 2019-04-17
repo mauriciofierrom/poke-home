@@ -51,7 +51,7 @@ createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
       payload = GooglePayload False [SimpleResponse (Just msg)]
-   in DFResponse (Just msg) (Just [MText (Just [msg])]) (Just "mauriciofierro.dev") payload
+   in DFResponse (Just msg) [FulfillmentMessage (MText (Just [msg])) (MSimpleResponse msg)] (Just "mauriciofierro.dev") payload
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
 pokeApiRequest req =

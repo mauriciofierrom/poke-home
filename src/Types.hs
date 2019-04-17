@@ -37,7 +37,7 @@ data DFQueryResult =
                 , fulfillmentText :: Maybe String
                 -- disabled for now, as it doesn't seem necessary for the
                 -- current implementation
-                -- , fulfillmentMessages :: M.Map String String
+                -- , fulfillmentMessages :: [FulfillmentMessage]
                 , outputContexts :: Maybe DFOutputContext
                 , intent :: Maybe DFIntent
                 , intentDetectionConfidence :: Maybe Float
@@ -62,7 +62,8 @@ instance FromJSON DFRequest
 -}
 data DFResponse =
   DFResponse { dfrFulfillmentText :: Maybe String
-             , dfrFulfillmentMessages :: Maybe [DF.MText] -- check how to use an unified data type
+             , dfrFulfillmentMessages :: [FulfillmentMessage]
+             -- , dfrFulfillmentMessages :: Maybe [DF.MText] -- check how to use an unified data type
              , dfrSource :: Maybe String
              , dfrPayload :: GooglePayload
              } deriving (Eq, Show)
@@ -106,3 +107,17 @@ instance ToJSON GooglePayload where
                object [ "items" .= richResponse gp ]
              ]
            ]
+
+data FulfillmentMessage =
+  FulfillmentMessage { mText :: DF.MText
+                     , mSimpleResponse :: DF.MSimpleResponse } deriving (Eq, Show)
+
+instance FromJSON FulfillmentMessage where
+  parseJSON = withObject "fulfillmentMessages" $ \fm -> do
+    mText <- fm .: "text"
+    mSimpleResponse <- fm .: "simpleResponses"
+    return FulfillmentMessage{..}
+
+instance ToJSON FulfillmentMessage where
+  toJSON fm = object [ "text" .= mText fm
+                     , "simpleResponses" .= mSimpleResponse fm ]

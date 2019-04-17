@@ -5,6 +5,7 @@
 module DialogFlow.Message.Types
   ( Button(..)
   , MText(..)
+  , MSimpleResponse(..)
   , SimpleResponse(..)
   ) where
 
@@ -22,9 +23,22 @@ instance FromJSON MText where
 
 instance ToJSON MText where
   toJSON t = object [
-    "text" .= object [
+    -- "text" .= object [
     "text" .= tText t ]
-                    ]
+                    -- ]
+
+newtype MSimpleResponse = MSimpleResponse { mTextToSpeech :: String } deriving (Eq, Show)
+
+instance FromJSON MSimpleResponse where
+  parseJSON = withObject "simpleResponses" $ \sr ->
+    MSimpleResponse <$> sr .: "textToSpeech"
+
+instance ToJSON MSimpleResponse where
+  toJSON sr =
+    -- object [ "simpleResponses" .=
+      object [ "textToSpeech" .= mTextToSpeech sr
+             ]
+           -- ]
 
 data Image = Image { iImageUri :: Maybe String
                      , accessibilityText :: Maybe String
