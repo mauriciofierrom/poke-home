@@ -108,16 +108,9 @@ instance ToJSON GooglePayload where
              ]
            ]
 
-data FulfillmentMessage =
-  FulfillmentMessage { mText :: DF.MText
-                     , mSimpleResponse :: DF.MSimpleResponse } deriving (Eq, Show)
+newtype FulfillmentMessage = FulfillmentMessage { mSimpleResponses :: DF.MSimpleResponses }
+  deriving (Eq, Generic, Show)
 
-instance FromJSON FulfillmentMessage where
-  parseJSON = withObject "fulfillmentMessages" $ \fm -> do
-    mText <- fm .: "text"
-    mSimpleResponse <- fm .: "simpleResponses"
-    return FulfillmentMessage{..}
-
+instance FromJSON FulfillmentMessage
 instance ToJSON FulfillmentMessage where
-  toJSON fm = object [ "text" .= mText fm
-                     , "simpleResponses" .= mSimpleResponse fm ]
+  toJSON s = object [ "simpleResponses" .= mSimpleResponses s ]
