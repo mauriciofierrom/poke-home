@@ -38,7 +38,7 @@ data DFQueryResult =
                 -- disabled for now, as it doesn't seem necessary for the
                 -- current implementation
                 -- , fulfillmentMessages :: [FulfillmentMessage]
-                , outputContexts :: Maybe DFOutputContext
+                -- , outputContexts :: Maybe DFOutputContext
                 , intent :: Maybe DFIntent
                 , intentDetectionConfidence :: Maybe Float
                 -- , diagnosticInfo :: Maybe (M.Map String String)
