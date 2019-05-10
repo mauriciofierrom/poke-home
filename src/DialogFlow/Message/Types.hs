@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE LambdaCase #-}
 
 module DialogFlow.Message.Types
   ( Button(..)
@@ -10,7 +11,8 @@ module DialogFlow.Message.Types
   , SimpleResponse(..)
   ) where
 
-import Data.Aeson (FromJSON, parseJSON, ToJSON, toJSON, object, withObject, (.:), (.=))
+import Data.Aeson (FromJSON, parseJSON, ToJSON, toJSON, object, withObject, (.:), (.=), Object(..))
+import Data.Foldable (asum)
 import Data.Maybe (catMaybes)
 import GHC.Generics
 
@@ -68,27 +70,34 @@ data Card = Card { cCardTitle :: Maybe String
                  , cButtons :: Maybe [Button]
                  } deriving (Eq, Generic, Show)
 
+data SpeechText = TextToSpeech String | SSML String deriving (Eq, Show)
+
+instance FromJSON SpeechText where
+  parseJSON = withObject "textToSpeech or SSML" $ \st ->
+    asum [ TextToSpeech <$> st .: "textToSpeech"
+         , SSML <$> st .: "ssml" ]
+
+instance ToJSON SpeechText where
+  toJSON = \case
+    TextToSpeech textToSpeech -> object ["textToSpeech" .= textToSpeech]
+    SSML ssml -> object ["ssml" .= ssml]
+
 data SimpleResponse =
-  SimpleResponse { textToSpeech :: Maybe String -- these fields are mutually exclusive vv
-                 -- , ssml :: Maybe String -- ^^ these fields are mutually exclusive ^^
-                 -- , displayText :: Maybe String
+  SimpleResponse { simpleResponseText :: SpeechText -- these fields are mutually exclusive vv
+                 , displayText :: Maybe String
                  } deriving (Eq, Show)
 
 instance FromJSON SimpleResponse where
   parseJSON = withObject "simpleResponse" $ \sr -> do
-    simpleResponse <- sr .: "simpleResponse"
-    textToSpeech <- simpleResponse .: "textToSpeech"
+    simpleResponseText <- sr .: "simpleResponse"
+    -- textToSpeech <- simpleResponse .: "textToSpeech"
     -- ssml <- simpleResponse .: "ssml"
-    -- displayText <- simpleResponse .: "displayText"
+    displayText <- sr .: "displayText"
     return SimpleResponse{..}
 
+
 instance ToJSON SimpleResponse where
-  toJSON sr =
-    object [ "simpleResponse" .=
-      object [ "textToSpeech" .= textToSpeech sr ]
-             -- , "ssml" .= ssml sr
-             -- , "displayText" .= displayText sr ]
-           ]
+  toJSON SimpleResponse{..} = undefined
 
 data BasicCard =
   BasicCard { bsTitle :: Maybe String
