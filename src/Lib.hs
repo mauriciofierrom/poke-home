@@ -16,7 +16,7 @@ import PokeApi.Type.Queries
 import Servant
 import Servant.API
 import Types
-import DialogFlow.Message.Types
+import DialogFlow.Message
 
 import qualified Data.Text as T
 import qualified Data.Map as M

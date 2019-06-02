@@ -8,7 +8,7 @@ import GHC.Generics
 
 import qualified Data.Map as M
 
-import qualified DialogFlow.Message.Types as DF
+import qualified DialogFlow.Message as DF
 
 data DFIntent =
   DFIntent { intentName :: String
@@ -108,7 +108,7 @@ instance ToJSON GooglePayload where
              ]
            ]
 
-newtype FulfillmentMessage = FulfillmentMessage { mSimpleResponses :: DF.MSimpleResponses }
+newtype FulfillmentMessage = FulfillmentMessage { mSimpleResponses :: DF.SimpleResponses }
   deriving (Eq, Generic, Show)
 
 instance FromJSON FulfillmentMessage
