@@ -1,0 +1,37 @@
+{
+  "responseId": "dc3032fa-89bb-45da-b697-1d62afff17d9",
+  "queryResult": {
+    "queryText": "poison weak",
+    "parameters": {
+      "PokemonType": "",
+      "Quality": "weak"
+    },
+    "allRequiredParamsPresent": true,
+    "fulfillmentMessages": [
+      {
+        "text": {
+          "text": [
+            ""
+          ]
+        }
+      },
+      {
+        "payload": {
+          
+        }
+      }
+    ],
+    "intent": {
+      "name": "projects\/test1-bc8ca\/agent\/intents\/1c07d6b2-86e7-4f1a-a0f0-f6b2e3b02056",
+      "displayName": "Get types"
+    },
+    "intentDetectionConfidence": 0.5,
+    "languageCode": "en"
+  },
+  "originalDetectIntentRequest": {
+    "payload": {
+      
+    }
+  },
+  "session": "projects\/test1-bc8ca\/agent\/sessions\/23b73e3c-611b-66fe-f31e-09f2af99e958"
+}

@@ -14,7 +14,6 @@ import PokeApi.Types
 import PokeApi.Type.Types
 import PokeApi.Type.Queries
 import Servant
-import Servant.API
 import Types
 import DialogFlow.Message
 
@@ -50,8 +49,9 @@ createResponse :: [Type'] -> DFResponse
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
-      payload = GooglePayload False [SimpleResponse (Just msg)]
-   in DFResponse (Just msg) [FulfillmentMessage (MSimpleResponses [MSimpleResponse msg])] (Just "mauriciofierro.dev") payload
+      speechResponse = SimpleResponse (TextToSpeech msg) Nothing
+      payload = GooglePayload False [speechResponse]
+   in DFResponse (Just msg) [FulfillmentMessage (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev") payload
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
 pokeApiRequest req =
