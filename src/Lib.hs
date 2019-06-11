@@ -52,9 +52,13 @@ createResponse :: [Type'] -> Response
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
-      speechResponse = SimpleResponse (TextToSpeech msg) Nothing
-      payload = GooglePayload False [speechResponse]
-   in Response (Just msg) [Message (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev") payload
+      -- speechResponse = SimpleResponse (TextToSpeech msg) Nothing
+      -- imageUri = "https://avatars0.githubusercontent.com/u/180308?s=460&v=4"
+      basicCard = Message (BasicCard (Just "Title") Nothing (BasicCardFormattedText msg) [])
+      -- card = Message (Card (Just "Result mate") (Just "Poke-result") (Just imageUri) [])
+   in Response (Just msg) [basicCard] (Just "mauriciofierro.dev")
+      -- payload = GooglePayload False [speechResponse]
+   -- in Response (Just msg) [Message (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev")
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
 pokeApiRequest req =
