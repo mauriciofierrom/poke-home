@@ -6,11 +6,11 @@ let
           pokehome =
             haskellPackagesNew.callPackage ./poke-home.nix { };
 
-            pokeapi =
-              haskellPackagesNew.callPackage ./pokeapi.nix { };
+          pokeapi =
+            haskellPackagesNew.callPackage ./pokeapi.nix { };
 
-            dialog-flow =
-              haskellPackagesNew.callPackage ./dialog-flow.nix { };
+          dialog-flow =
+            haskellPackagesNew.callPackage ./dialog-flow.nix { };
             };
           };
         };

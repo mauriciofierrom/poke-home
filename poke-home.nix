@@ -1,7 +1,7 @@
 { mkDerivation, aeson, base, bytestring, containers, dialog-flow
 , http-client, http-client-tls, mtl, pokeapi, servant
 , servant-server, stdenv, text, transformers, unordered-containers
-, wai, warp, ghcid
+, wai, warp
 }:
 mkDerivation {
   pname = "poke-home";
@@ -17,13 +17,13 @@ mkDerivation {
   executableHaskellDepends = [
     aeson base bytestring containers http-client http-client-tls mtl
     pokeapi servant servant-server text transformers
-    unordered-containers wai warp ghcid
-  ];
-  testHaskellDepends = [
-    aeson base bytestring containers http-client http-client-tls mtl
-    pokeapi servant servant-server text transformers
     unordered-containers wai warp
   ];
-  homepage = "https://github.com/githubuser/poke-home#readme";
+  testHaskellDepends = [
+    aeson base bytestring containers dialog-flow http-client
+    http-client-tls mtl pokeapi servant servant-server text
+    transformers unordered-containers wai warp
+  ];
+  homepage = "https://github.com/mauriciofierrom/poke-home#readme";
   license = stdenv.lib.licenses.bsd3;
 }

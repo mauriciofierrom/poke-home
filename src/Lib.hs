@@ -15,10 +15,13 @@ import PokeApi.Type.Types
 import PokeApi.Type.Queries
 import Servant
 import Types
-import DialogFlow.Message
 
-import qualified Data.Text as T
 import qualified Data.Map as M
+import qualified Data.Text as T
+
+import DialogFlow.Message
+import DialogFlow.Response
+
 
 extractTypeParameter ::  DFRequest -> Maybe Type'
 extractTypeParameter req = do
@@ -35,9 +38,9 @@ extractQualifierParameter  req = do
       getQualifier "effective" = Just Effective
       getQualifier _ = Nothing
 
-type API = "fulfillment" :> ReqBody '[JSON] DFRequest :> Post '[JSON] DFResponse
+type API = "fulfillment" :> ReqBody '[JSON] DFRequest :> Post '[JSON] Response
 
-fulfillment :: DFRequest -> Handler DFResponse
+fulfillment :: DFRequest -> Handler Response
 fulfillment req = do
   types <- liftIO $ pokeApiRequest req
   case types of
@@ -45,13 +48,13 @@ fulfillment req = do
     Right types ->
       return $ createResponse types
 
-createResponse :: [Type'] -> DFResponse
+createResponse :: [Type'] -> Response
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
       speechResponse = SimpleResponse (TextToSpeech msg) Nothing
       payload = GooglePayload False [speechResponse]
-   in DFResponse (Just msg) [FulfillmentMessage (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev") payload
+   in Response (Just msg) [Message (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev") payload
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
 pokeApiRequest req =
