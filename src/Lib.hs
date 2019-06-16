@@ -45,6 +45,7 @@ type API = "fulfillment" :> ReqBody '[JSON] DFRequest :> Post '[JSON] DFR.Respon
 
 fulfillment :: DFRequest -> Handler DFR.Response
 fulfillment req = do
+  liftIO $ putStrLn "Request!"
   types <- liftIO $ pokeApiRequest req
   case types of
     Left err -> error "SomeException"
@@ -62,7 +63,7 @@ createResponse types =
       -- imageUri = "https://avatars0.githubusercontent.com/u/180308?s=460&v=4"
       -- basicCard = Message (BasicCard (Just "Title") Nothing (BasicCardImage msg) [])
       -- card = Message (Card (Just "Result mate") (Just "Poke-result") (Just imageUri) [])
-      response = GR.Response True "" [GR.RichResponse $ GR.BasicCard basicCard]
+      response = GR.Response False [GR.RichResponse $ GR.BasicCard basicCard]
       payload = GooglePayload response
    in DFR.Response (Just msg) [Message basicCard] (Just "mauriciofierro.dev") payload
    -- in Response (Just msg) [Message (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev")
