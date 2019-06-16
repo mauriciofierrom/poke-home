@@ -20,7 +20,10 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 
 import DialogFlow.Message
-import DialogFlow.Response
+import qualified DialogFlow.Response as DFR
+
+import DialogFlow.Payload.Google
+import qualified DialogFlow.Payload.Google.Response as GR
 
 
 extractTypeParameter ::  DFRequest -> Maybe Type'
@@ -38,9 +41,9 @@ extractQualifierParameter  req = do
       getQualifier "effective" = Just Effective
       getQualifier _ = Nothing
 
-type API = "fulfillment" :> ReqBody '[JSON] DFRequest :> Post '[JSON] Response
+type API = "fulfillment" :> ReqBody '[JSON] DFRequest :> Post '[JSON] DFR.Response
 
-fulfillment :: DFRequest -> Handler Response
+fulfillment :: DFRequest -> Handler DFR.Response
 fulfillment req = do
   types <- liftIO $ pokeApiRequest req
   case types of
@@ -48,16 +51,20 @@ fulfillment req = do
     Right types ->
       return $ createResponse types
 
-createResponse :: [Type'] -> Response
+createResponse :: [Type'] -> DFR.Response
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
       -- speechResponse = SimpleResponse (TextToSpeech msg) Nothing
+      image = Image (Just "https://avatars0.githubusercontent.com/u/180308?s=460&v=4") (Just "desc")
+      cardContent = BasicCardImage image
+      basicCard = BasicCard (Just "Le title") (Just "Le subtitle") cardContent []
       -- imageUri = "https://avatars0.githubusercontent.com/u/180308?s=460&v=4"
-      basicCard = Message (BasicCard (Just "Title") Nothing (BasicCardFormattedText msg) [])
+      -- basicCard = Message (BasicCard (Just "Title") Nothing (BasicCardImage msg) [])
       -- card = Message (Card (Just "Result mate") (Just "Poke-result") (Just imageUri) [])
-   in Response (Just msg) [basicCard] (Just "mauriciofierro.dev")
-      -- payload = GooglePayload False [speechResponse]
+      response = GR.Response True "" [GR.RichResponse $ GR.BasicCard basicCard]
+      payload = GooglePayload response
+   in DFR.Response (Just msg) [Message basicCard] (Just "mauriciofierro.dev") payload
    -- in Response (Just msg) [Message (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev")
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
