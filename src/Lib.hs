@@ -24,6 +24,7 @@ import qualified DialogFlow.Response as DFR
 
 import DialogFlow.Payload.Google
 import qualified DialogFlow.Payload.Google.Response as GR
+import qualified DialogFlow.Payload.Google.OtherTypes as GO
 
 
 extractTypeParameter ::  DFRequest -> Maybe Type'
@@ -56,16 +57,16 @@ createResponse :: [Type'] -> DFR.Response
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
-      -- speechResponse = SimpleResponse (TextToSpeech msg) Nothing
-      image = Image (Just "https://avatars0.githubusercontent.com/u/180308?s=460&v=4") (Just "desc")
-      cardContent = BasicCardImage image
-      basicCard = BasicCard (Just "Le title") (Just "Le subtitle") cardContent []
+      speechResponse = SimpleResponse (TextToSpeech msg) Nothing
+      image = GO.Image "https://avatars0.githubusercontent.com/u/180308" "desc" Nothing Nothing
+      cardContent = GO.BasicCardImage image
+      basicCard = GR.BasicCard (Just "Le title") (Just "Le subtitle") cardContent [] GO.DEFAULT
       -- imageUri = "https://avatars0.githubusercontent.com/u/180308?s=460&v=4"
       -- basicCard = Message (BasicCard (Just "Title") Nothing (BasicCardImage msg) [])
       -- card = Message (Card (Just "Result mate") (Just "Poke-result") (Just imageUri) [])
-      response = GR.Response False [GR.RichResponse $ GR.BasicCard basicCard]
+      response = GR.Response False [GR.RichResponse $ GR.SimpleResponse speechResponse, GR.RichResponse  basicCard]
       payload = GooglePayload response
-   in DFR.Response (Just msg) [Message basicCard] (Just "mauriciofierro.dev") payload
+   in DFR.Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload
    -- in Response (Just msg) [Message (SimpleResponses [speechResponse])] (Just "mauriciofierro.dev")
 
 pokeApiRequest :: DFRequest -> PokeApi [Type']
