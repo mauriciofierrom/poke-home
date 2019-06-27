@@ -23,14 +23,15 @@ import DialogFlow.Message
 import qualified DialogFlow.Response as DFR
 
 import qualified DialogFlow.Payload.Google as G
+import DialogFlow.Request
 
 
-extractTypeParameter ::  DFRequest -> Maybe Type'
+extractTypeParameter ::  Request -> Maybe Type'
 extractTypeParameter req = do
   typeParam <- (M.lookup "PokemonType" . parameters . queryResult) req
   getType (T.pack typeParam)
 
-extractQualifierParameter :: DFRequest -> Maybe Qualifier
+extractQualifierParameter :: Request -> Maybe Qualifier
 extractQualifierParameter  req = do
   typeParam <- (M.lookup "Quality" . parameters . queryResult) req
   getQualifier typeParam
@@ -40,9 +41,9 @@ extractQualifierParameter  req = do
       getQualifier "effective" = Just Effective
       getQualifier _ = Nothing
 
-type API = "fulfillment" :> ReqBody '[JSON] DFRequest :> Post '[JSON] DFR.Response
+type API = "fulfillment" :> ReqBody '[JSON] Request :> Post '[JSON] DFR.Response
 
-fulfillment :: DFRequest -> Handler DFR.Response
+fulfillment :: Request -> Handler DFR.Response
 fulfillment req = do
   liftIO $ putStrLn "Request!"
   types <- liftIO $ pokeApiRequest req
@@ -63,7 +64,7 @@ createResponse types =
       payload = G.GooglePayload response
    in DFR.Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload
 
-pokeApiRequest :: DFRequest -> PokeApi [Type']
+pokeApiRequest :: Request -> PokeApi [Type']
 pokeApiRequest req =
   let typeParam = extractTypeParameter req
       qualifierParam = extractQualifierParameter req
