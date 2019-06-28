@@ -20,7 +20,7 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 
 import DialogFlow.Message
-import qualified DialogFlow.Response as DFR
+import DialogFlow.Response (Response(..))
 
 import qualified DialogFlow.Payload.Google as G
 import DialogFlow.Request
@@ -41,9 +41,9 @@ extractQualifierParameter  req = do
       getQualifier "effective" = Just Effective
       getQualifier _ = Nothing
 
-type API = "fulfillment" :> ReqBody '[JSON] Request :> Post '[JSON] DFR.Response
+type API = "fulfillment" :> ReqBody '[JSON] Request :> Post '[JSON] Response
 
-fulfillment :: Request -> Handler DFR.Response
+fulfillment :: Request -> Handler Response
 fulfillment req = do
   liftIO $ putStrLn "Request!"
   types <- liftIO $ pokeApiRequest req
@@ -52,7 +52,7 @@ fulfillment req = do
     Right types ->
       return $ createResponse types
 
-createResponse :: [Type'] -> DFR.Response
+createResponse :: [Type'] -> Response
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
@@ -62,7 +62,7 @@ createResponse types =
       basicCard = G.BasicCard (Just "Le title") (Just "Le subtitle") cardContent [] G.DEFAULT
       response = G.Response False [G.RichResponse $ G.SimpleResponse speechResponse, G.RichResponse  basicCard]
       payload = G.GooglePayload response
-   in DFR.Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload
+   in Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
 
 pokeApiRequest :: Request -> PokeApi [Type']
 pokeApiRequest req =
