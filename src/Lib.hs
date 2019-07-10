@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Lib
     (
@@ -41,16 +42,29 @@ extractQualifierParameter  req = do
       getQualifier "effective" = Just Effective
       getQualifier _ = Nothing
 
+extractGameParameter :: Request -> Maybe String
+extractGameParameter req = (M.lookup "Game" . parameters . queryResult) req
+
 type API = "fulfillment" :> ReqBody '[JSON] Request :> Post '[JSON] Response
 
 fulfillment :: Request -> Handler Response
 fulfillment req = do
   liftIO $ putStrLn "Request!"
-  types <- liftIO $ pokeApiRequest req
-  case types of
-    Left err -> error "SomeException"
-    Right types ->
-      return $ createResponse types
+  case (intent . queryResult) req of
+    Nothing -> error "No intent" -- TODO: this should obviously not throw an error.
+    Just intent -> fulfillIntent req (displayName intent)
+
+fulfillIntent :: Request -> String -> Handler Response
+fulfillIntent req = \case
+  "Get types" -> do
+    types <- liftIO $ pokeApiRequest req
+    case types of
+      Left err -> error "SomeException"
+      Right types ->
+        return $ createResponse types
+  -- "Get Pokemon location" -> do
+  --   games <- liftIO $ 
+
 
 createResponse :: [Type'] -> Response
 createResponse types =
@@ -75,6 +89,17 @@ pokeApiRequest req =
          case qualifier of
            Effective -> effectiveAgainst manager type'
            Weak -> weakAgainst manager type'
+
+-- gameLocationRequest :: Request -> PokeApi [String]
+-- gameLocationRequest req = 
+--   case extractGameParameter req of
+--     Just game -> do
+--       case outputContexts
+--       manager <- liftIO $ newManager tlsManagerSettings
+--       let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
+--           pokemon = erro
+--        in pokemonEncounterByGame clientEnv 
+
 
 server :: Server API
 server = fulfillment
