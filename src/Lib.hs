@@ -10,6 +10,7 @@ module Lib
 
 import Control.Monad.IO.Class (liftIO)
 import Data.List (intercalate)
+import Debug.Trace
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import PokeApi.Types
@@ -46,7 +47,7 @@ extractQualifierParameter  req = do
       getQualifier _ = Nothing
 
 extractGameParameter :: Request -> Maybe String
-extractGameParameter req = (M.lookup "Game" . parameters . queryResult) req
+extractGameParameter req = (M.lookup "PokemonGameVersion" . parameters . queryResult) req
 
 type API = "fulfillment" :> ReqBody '[JSON] Request :> Post '[JSON] Response
 
@@ -66,11 +67,17 @@ fulfillIntent req = \case
       Right types ->
         return $ createResponse types
   "Get Pokemon location" -> do
+    let msg = "In what game?"
+        speechResponse = SimpleResponse (TextToSpeech msg) Nothing
+        response = G.Response False [G.RichResponse $ G.SimpleResponse speechResponse]
+        payload = G.GooglePayload response
+     in return $ Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
+  "Get Pokemon location - custom" -> do
     games <- liftIO $ gameLocationRequest req
     case games of
       Left err -> error "Error"
-      Right games ->
-        return $ createFollowupResponse games
+      Right games -> return $ createFollowupResponse games
+
 
 createFollowupResponse :: [String] -> Response
 createFollowupResponse encounters =
@@ -109,10 +116,11 @@ gameLocationRequest :: Request -> PokeApi [String]
 gameLocationRequest req = do
   manager' <- liftIO $ newManager tlsManagerSettings
   case extractGameParameter req of
-    Just game ->
+    Just game -> do
+      traceShowM game
       case DialogFlow.Request.outputContexts (queryResult req) of
         Just ctxs ->
-          case getContextParam ctxs "GetPokemonlocation-followup" "pokemon" of
+          case getContextParam ctxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon" of
             Just pkmnName ->
               let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
                in pokemonEncounterByGame clientEnv pkmnName game
