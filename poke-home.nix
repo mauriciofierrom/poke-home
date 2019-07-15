@@ -1,7 +1,7 @@
 { mkDerivation, aeson, base, bytestring, containers, dialog-flow
 , http-client, http-client-tls, mtl, pokeapi, servant
-, servant-server, stdenv, text, transformers, unordered-containers
-, wai, warp
+, servant-client, servant-server, stdenv, text, transformers
+, unordered-containers, wai, warp
 }:
 mkDerivation {
   pname = "poke-home";
@@ -11,8 +11,8 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     aeson base bytestring containers dialog-flow http-client
-    http-client-tls mtl pokeapi servant servant-server text
-    transformers unordered-containers wai warp
+    http-client-tls mtl pokeapi servant servant-client servant-server
+    text transformers unordered-containers wai warp
   ];
   executableHaskellDepends = [
     aeson base bytestring containers http-client http-client-tls mtl

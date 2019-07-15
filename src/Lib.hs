@@ -9,12 +9,15 @@ module Lib
     ) where
 
 import Control.Monad.IO.Class (liftIO)
+import Data.List (intercalate)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import PokeApi.Types
 import PokeApi.Type.Types
 import PokeApi.Type.Queries
+import PokeApi.Pokemon.Queries
 import Servant
+import Servant.Client hiding (Response)
 import Types
 
 import qualified Data.Map as M
@@ -62,9 +65,20 @@ fulfillIntent req = \case
       Left err -> error "SomeException"
       Right types ->
         return $ createResponse types
-  -- "Get Pokemon location" -> do
-  --   games <- liftIO $ 
+  "Get Pokemon location" -> do
+    games <- liftIO $ gameLocationRequest req
+    case games of
+      Left err -> error "Error"
+      Right games ->
+        return $ createFollowupResponse games
 
+createFollowupResponse :: [String] -> Response
+createFollowupResponse encounters =
+  let msg = intercalate " and " encounters
+      speechResponse = SimpleResponse (TextToSpeech msg) Nothing
+      response = G.Response False [G.RichResponse $ G.SimpleResponse speechResponse]
+      payload = G.GooglePayload response
+   in Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
 
 createResponse :: [Type'] -> Response
 createResponse types =
@@ -90,16 +104,21 @@ pokeApiRequest req =
            Effective -> effectiveAgainst manager type'
            Weak -> weakAgainst manager type'
 
--- gameLocationRequest :: Request -> PokeApi [String]
--- gameLocationRequest req = 
---   case extractGameParameter req of
---     Just game -> do
---       case outputContexts
---       manager <- liftIO $ newManager tlsManagerSettings
---       let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
---           pokemon = erro
---        in pokemonEncounterByGame clientEnv 
 
+gameLocationRequest :: Request -> PokeApi [String]
+gameLocationRequest req = do
+  manager' <- liftIO $ newManager tlsManagerSettings
+  case extractGameParameter req of
+    Just game ->
+      case DialogFlow.Request.outputContexts (queryResult req) of
+        Just ctxs ->
+          case getContextParam ctxs "GetPokemonlocation-followup" "pokemon" of
+            Just pkmnName ->
+              let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
+               in pokemonEncounterByGame clientEnv pkmnName game
+            _ -> error "No Pokemon context"
+        _ -> error "No contexts"
+    _ -> error "No game"
 
 server :: Server API
 server = fulfillment
