@@ -1,7 +1,5 @@
 dist/
 dist-newstyle/
-.stack-work/
-poke-home.cabal
 result
 .ghc*
 *~

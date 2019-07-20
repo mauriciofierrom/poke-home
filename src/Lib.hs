@@ -69,7 +69,7 @@ fulfillIntent req = \case
   "Get Pokemon location" -> do
     let msg = "In what game?"
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing
-        response = G.Response False [G.RichResponse $ G.SimpleResponse speechResponse]
+        response = G.Response True [G.RichResponse $ G.SimpleResponse speechResponse]
         payload = G.GooglePayload response
      in return $ Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
   "Get Pokemon location - custom" -> do
