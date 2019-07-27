@@ -47,7 +47,7 @@ extractQualifierParameter  req = do
       getQualifier _ = Nothing
 
 extractGameParameter :: Request -> Maybe String
-extractGameParameter req = (M.lookup "PokemonGameVersion" . parameters . queryResult) req
+extractGameParameter = M.lookup "PokemonGameVersion" . parameters . queryResult
 
 type API = "fulfillment" :> ReqBody '[JSON] Request :> Post '[JSON] Response
 
@@ -66,7 +66,7 @@ fulfillIntent req = \case
       Left err -> error "SomeException"
       Right types ->
         return $ createResponse types
-  "Get Pokemon location" -> do
+  "Get Pokemon location" ->
     let msg = "In what game?"
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing
         response = G.Response True [G.RichResponse $ G.SimpleResponse speechResponse]
