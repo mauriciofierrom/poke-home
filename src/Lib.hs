@@ -24,11 +24,11 @@ import Types
 import qualified Data.Map as M
 import qualified Data.Text as T
 
-import DialogFlow.Message
-import DialogFlow.Response (Response(..))
+import Dialogflow.Message
+import Dialogflow.Response (Response(..))
 
-import qualified DialogFlow.Payload.Google as G
-import DialogFlow.Request
+import qualified Dialogflow.Payload.Google as G
+import Dialogflow.Request
 
 
 extractTypeParameter ::  Request -> Maybe Type'
@@ -118,7 +118,7 @@ gameLocationRequest req = do
   case extractGameParameter req of
     Just game -> do
       traceShowM game
-      case DialogFlow.Request.outputContexts (queryResult req) of
+      case Dialogflow.Request.outputContexts (queryResult req) of
         Just ctxs ->
           case getContextParam ctxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon" of
             Just pkmnName ->
