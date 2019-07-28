@@ -69,7 +69,7 @@ fulfillIntent req = \case
   "Get Pokemon location" ->
     let msg = "In what game?"
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing
-        response = G.Response True [G.RichResponse $ G.SimpleResponse speechResponse]
+        response = G.Response True Nothing (G.RichResponse  [G.Item $ G.SimpleResponse speechResponse] [] Nothing)
         payload = G.GooglePayload response
      in return $ Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
   "Get Pokemon location - custom" -> do
@@ -83,7 +83,7 @@ createFollowupResponse :: [String] -> Response
 createFollowupResponse encounters =
   let msg = intercalate " and " encounters
       speechResponse = SimpleResponse (TextToSpeech msg) Nothing
-      response = G.Response False [G.RichResponse $ G.SimpleResponse speechResponse]
+      response = G.Response False Nothing (G.RichResponse [G.Item $ G.SimpleResponse speechResponse] [] Nothing)
       payload = G.GooglePayload response
    in Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
 
@@ -95,7 +95,7 @@ createResponse types =
       image = G.Image "https://avatars0.githubusercontent.com/u/180308" "desc" Nothing Nothing
       cardContent = G.BasicCardImage image
       basicCard = G.BasicCard (Just "Le title") (Just "Le subtitle") cardContent [] G.DEFAULT
-      response = G.Response False [G.RichResponse $ G.SimpleResponse speechResponse, G.RichResponse  basicCard]
+      response = G.Response False Nothing (G.RichResponse [G.Item $ G.SimpleResponse speechResponse, G.Item basicCard] [] Nothing)
       payload = G.GooglePayload response
    in Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
 
