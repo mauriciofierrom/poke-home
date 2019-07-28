@@ -31,12 +31,12 @@ import qualified Dialogflow.Payload.Google as G
 import Dialogflow.Request
 
 
-extractTypeParameter ::  Request -> Maybe Type'
+extractTypeParameter ::  WebhookRequest -> Maybe Type'
 extractTypeParameter req = do
   typeParam <- (M.lookup "PokemonType" . parameters . queryResult) req
   getType (T.pack typeParam)
 
-extractQualifierParameter :: Request -> Maybe Qualifier
+extractQualifierParameter :: WebhookRequest -> Maybe Qualifier
 extractQualifierParameter  req = do
   typeParam <- (M.lookup "Quality" . parameters . queryResult) req
   getQualifier typeParam
@@ -46,22 +46,22 @@ extractQualifierParameter  req = do
       getQualifier "effective" = Just Effective
       getQualifier _ = Nothing
 
-extractGameParameter :: Request -> Maybe String
+extractGameParameter :: WebhookRequest -> Maybe String
 extractGameParameter = M.lookup "PokemonGameVersion" . parameters . queryResult
 
-type API = "fulfillment" :> ReqBody '[JSON] Request :> Post '[JSON] Response
+type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] Response
 
-fulfillment :: Request -> Handler Response
+fulfillment :: WebhookRequest -> Handler Response
 fulfillment req = do
-  liftIO $ putStrLn "Request!"
+  liftIO $ putStrLn "WebhookRequest!"
   case (intent . queryResult) req of
     Nothing -> error "No intent" -- TODO: this should obviously not throw an error.
     Just intent -> fulfillIntent req (displayName intent)
 
-fulfillIntent :: Request -> String -> Handler Response
+fulfillIntent :: WebhookRequest -> String -> Handler Response
 fulfillIntent req = \case
   "Get types" -> do
-    types <- liftIO $ pokeApiRequest req
+    types <- liftIO $ pokeApiWebhookRequest req
     case types of
       Left err -> error "SomeException"
       Right types ->
@@ -73,7 +73,7 @@ fulfillIntent req = \case
         payload = G.GooglePayload response
      in return $ Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
   "Get Pokemon location - custom" -> do
-    games <- liftIO $ gameLocationRequest req
+    games <- liftIO $ gameLocationWebhookRequest req
     case games of
       Left err -> error "Error"
       Right games -> return $ createFollowupResponse games
@@ -99,8 +99,8 @@ createResponse types =
       payload = G.GooglePayload response
    in Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
 
-pokeApiRequest :: Request -> PokeApi [Type']
-pokeApiRequest req =
+pokeApiWebhookRequest :: WebhookRequest -> PokeApi [Type']
+pokeApiWebhookRequest req =
   let typeParam = extractTypeParameter req
       qualifierParam = extractQualifierParameter req
    in
@@ -112,8 +112,8 @@ pokeApiRequest req =
            Weak -> weakAgainst manager type'
 
 
-gameLocationRequest :: Request -> PokeApi [String]
-gameLocationRequest req = do
+gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
+gameLocationWebhookRequest req = do
   manager' <- liftIO $ newManager tlsManagerSettings
   case extractGameParameter req of
     Just game -> do
