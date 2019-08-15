@@ -1,5 +1,5 @@
 { mkDerivation, aeson, base, hpack, http-client, http-client-tls
-, servant, servant-client, stdenv, text, transformers, wai
+, servant, servant-client, stdenv, text, transformers, url, wai
 }:
 mkDerivation {
   pname = "pokeapi";
@@ -7,12 +7,12 @@ mkDerivation {
   src = /home/mauricio/projects/haskell/pokeapi;
   libraryHaskellDepends = [
     aeson base http-client http-client-tls servant servant-client text
-    transformers wai
+    transformers url wai
   ];
   libraryToolDepends = [ hpack ];
   testHaskellDepends = [
     aeson base http-client http-client-tls servant servant-client text
-    transformers wai
+    transformers url wai
   ];
   preConfigure = "hpack";
   homepage = "https://github.com/githubuser/pokeapi#readme";

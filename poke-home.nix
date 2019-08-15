@@ -1,4 +1,4 @@
-{ mkDerivation, aeson, base, bytestring, containers, dialog-flow
+{ mkDerivation, aeson, base, bytestring, containers, dialogflow
 , http-client, http-client-tls, mtl, pokeapi, servant
 , servant-client, servant-server, stdenv, text, transformers
 , unordered-containers, wai, warp
@@ -10,7 +10,7 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    aeson base bytestring containers dialog-flow http-client
+    aeson base bytestring containers dialogflow http-client
     http-client-tls mtl pokeapi servant servant-client servant-server
     text transformers unordered-containers wai warp
   ];
@@ -20,7 +20,7 @@ mkDerivation {
     unordered-containers wai warp
   ];
   testHaskellDepends = [
-    aeson base bytestring containers dialog-flow http-client
+    aeson base bytestring containers dialogflow http-client
     http-client-tls mtl pokeapi servant servant-server text
     transformers unordered-containers wai warp
   ];

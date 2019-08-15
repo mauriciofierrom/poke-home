@@ -9,8 +9,8 @@ let
           pokeapi =
             haskellPackagesNew.callPackage ./pokeapi.nix { };
 
-          dialog-flow =
-            haskellPackagesNew.callPackage ./dialog-flow.nix { };
+          dialogflow =
+            haskellPackagesNew.callPackage ./dialogflow.nix { };
             };
           };
         };

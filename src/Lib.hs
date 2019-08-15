@@ -10,7 +10,6 @@ module Lib
 
 import Control.Monad.IO.Class (liftIO)
 import Data.List (intercalate)
-import Debug.Trace
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import PokeApi.Types
@@ -24,11 +23,11 @@ import Types
 import qualified Data.Map as M
 import qualified Data.Text as T
 
-import Dialogflow.Message
-import Dialogflow.Response (Response(..))
+import Dialogflow.V2.Message
+import Dialogflow.V2.Response (WebhookResponse(..))
 
-import qualified Dialogflow.Payload.Google as G
-import Dialogflow.Request
+import qualified Dialogflow.V2.Payload.Google as G
+import Dialogflow.V2.Request
 
 
 extractTypeParameter ::  WebhookRequest -> Maybe Type'
@@ -49,16 +48,16 @@ extractQualifierParameter  req = do
 extractGameParameter :: WebhookRequest -> Maybe String
 extractGameParameter = M.lookup "PokemonGameVersion" . parameters . queryResult
 
-type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] Response
+type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] WebhookResponse
 
-fulfillment :: WebhookRequest -> Handler Response
+fulfillment :: WebhookRequest -> Handler WebhookResponse
 fulfillment req = do
   liftIO $ putStrLn "WebhookRequest!"
   case (intent . queryResult) req of
     Nothing -> error "No intent" -- TODO: this should obviously not throw an error.
     Just intent -> fulfillIntent req (displayName intent)
 
-fulfillIntent :: WebhookRequest -> String -> Handler Response
+fulfillIntent :: WebhookRequest -> String -> Handler WebhookResponse
 fulfillIntent req = \case
   "Get types" -> do
     types <- liftIO $ pokeApiWebhookRequest req
@@ -70,8 +69,8 @@ fulfillIntent req = \case
     let msg = "In what game?"
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing
         response = G.Response True Nothing (G.RichResponse  [G.Item $ G.SimpleResponse speechResponse] [] Nothing)
-        payload = G.GooglePayload response
-     in return $ Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
+        payload = Just $ G.GooglePayload response
+     in return $ WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
   "Get Pokemon location - custom" -> do
     games <- liftIO $ gameLocationWebhookRequest req
     case games of
@@ -79,25 +78,25 @@ fulfillIntent req = \case
       Right games -> return $ createFollowupResponse games
 
 
-createFollowupResponse :: [String] -> Response
+createFollowupResponse :: [String] -> WebhookResponse
 createFollowupResponse encounters =
   let msg = intercalate " and " encounters
       speechResponse = SimpleResponse (TextToSpeech msg) Nothing
       response = G.Response False Nothing (G.RichResponse [G.Item $ G.SimpleResponse speechResponse] [] Nothing)
-      payload = G.GooglePayload response
-   in Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
+      payload = Just $ G.GooglePayload response
+   in WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
 
-createResponse :: [Type'] -> Response
+createResponse :: [Type'] -> WebhookResponse
 createResponse types =
   let types' = fmap getTypeName types
       msg = T.unpack $ T.intercalate " and " types'
-      speechResponse = SimpleResponse (TextToSpeech msg) Nothing
+      speechResponse = SimpleResponse (TextToSpeech msg) (Just msg)
       image = G.Image "https://avatars0.githubusercontent.com/u/180308" "desc" Nothing Nothing
       cardContent = G.BasicCardImage image
       basicCard = G.BasicCard (Just "Le title") (Just "Le subtitle") cardContent [] G.DEFAULT
       response = G.Response False Nothing (G.RichResponse [G.Item $ G.SimpleResponse speechResponse, G.Item basicCard] [] Nothing)
-      payload = G.GooglePayload response
-   in Response (Just msg) [Message $ SimpleResponses [speechResponse]] (Just "mauriciofierro.dev") payload Nothing Nothing
+      payload = Just $ G.GooglePayload response
+   in WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
 
 pokeApiWebhookRequest :: WebhookRequest -> PokeApi [Type']
 pokeApiWebhookRequest req =
@@ -117,10 +116,9 @@ gameLocationWebhookRequest req = do
   manager' <- liftIO $ newManager tlsManagerSettings
   case extractGameParameter req of
     Just game -> do
-      traceShowM game
-      case Dialogflow.Request.outputContexts (queryResult req) of
+      case Dialogflow.V2.Request.outputContexts (queryResult req) of
         Just ctxs ->
-          case getContextParam ctxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon" of
+          case getContextParameter ctxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon" of
             Just pkmnName ->
               let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
                in pokemonEncounterByGame clientEnv pkmnName game
