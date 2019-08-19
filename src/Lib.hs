@@ -2,6 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Lib
     (
@@ -16,6 +17,7 @@ import PokeApi.Types
 import PokeApi.Type.Types
 import PokeApi.Type.Queries
 import PokeApi.Pokemon.Queries
+import PokeApi.Pokemon.Types
 import Servant
 import Servant.Client hiding (Response)
 import Types
@@ -23,11 +25,11 @@ import Types
 import qualified Data.Map as M
 import qualified Data.Text as T
 
-import Dialogflow.V2.Message
-import Dialogflow.V2.Response (WebhookResponse(..))
+import Dialogflow.V2.Fulfillment.Message
+import Dialogflow.V2.Fulfillment.Webhook.Response hiding (outputContexts)
 
-import qualified Dialogflow.V2.Payload.Google as G
-import Dialogflow.V2.Request
+import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
+import Dialogflow.V2.Fulfillment.Webhook.Request
 
 
 extractTypeParameter ::  WebhookRequest -> Maybe Type'
@@ -110,21 +112,20 @@ pokeApiWebhookRequest req =
            Effective -> effectiveAgainst manager type'
            Weak -> weakAgainst manager type'
 
-
 gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
 gameLocationWebhookRequest req = do
   manager' <- liftIO $ newManager tlsManagerSettings
-  case extractGameParameter req of
-    Just game -> do
-      case Dialogflow.V2.Request.outputContexts (queryResult req) of
-        Just ctxs ->
-          case getContextParameter ctxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon" of
-            Just pkmnName ->
-              let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
-               in pokemonEncounterByGame clientEnv pkmnName game
-            _ -> error "No Pokemon context"
-        _ -> error "No contexts"
-    _ -> error "No game"
+  let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
+   in case getParams req of
+        Just EncounterParams{..} -> pokemonEncounterByGame clientEnv pkmn game
+        Nothing -> return $ Right []
+
+getParams :: WebhookRequest -> Maybe EncounterParams
+getParams req = do
+  game <- extractGameParameter req
+  oCtxs <- outputContexts (queryResult req)
+  pkmn <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
+  return EncounterParams{..}
 
 server :: Server API
 server = fulfillment
