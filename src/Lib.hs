@@ -3,12 +3,16 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE MonoLocalBinds #-}
 
 module Lib
     (
      app
     ) where
 
+import Control.Monad.Reader
+import Control.Monad.Except
+import Control.Exception hiding (Handler)
 import Control.Monad.IO.Class (liftIO)
 import Data.List (intercalate)
 import Network.HTTP.Client (newManager)
@@ -59,6 +63,13 @@ fulfillment req = do
     Nothing -> error "No intent" -- TODO: this should obviously not throw an error.
     Just intent -> fulfillIntent req (displayName intent)
 
+-- fulfill :: WebhookRequest -> Handler WebhookResponse
+-- fulfill req = do
+--   liftIO $ putStrLn "WebhookRequest!"
+--   case (intent . queryResult) req of
+--     Nothing -> error "No intent"
+--     Just intent -> fulfillIt req (displayName intent)
+
 fulfillIntent :: WebhookRequest -> String -> Handler WebhookResponse
 fulfillIntent req = \case
   "Get types" -> do
@@ -79,6 +90,15 @@ fulfillIntent req = \case
       Left err -> error "Error"
       Right games -> return $ createFollowupResponse games
 
+fulfillIt
+  :: HasPokeApi m
+  => WebhookRequest
+  -> String
+  -> m WebhookResponse
+fulfillIt req = \case
+  "Get types" -> do
+    types <- pokeApiRequest req
+    return $ createResponse types
 
 createFollowupResponse :: [String] -> WebhookResponse
 createFollowupResponse encounters =
@@ -112,6 +132,20 @@ pokeApiWebhookRequest req =
            Effective -> effectiveAgainst manager type'
            Weak -> weakAgainst manager type'
 
+pokeApiRequest
+  :: HasPokeApi m
+  => WebhookRequest
+  -> m [Type']
+pokeApiRequest req =
+  let typeParam = extractTypeParameter req
+      qualifierParam = extractQualifierParameter req
+   in
+     case (typeParam, qualifierParam) of
+       (Just type', Just qualifier) ->
+         case qualifier of
+           Effective -> effAgainst type'
+           Weak -> weakA type'
+
 gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
 gameLocationWebhookRequest req = do
   manager' <- liftIO $ newManager tlsManagerSettings
@@ -127,11 +161,21 @@ getParams req = do
   pkmn <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
   return EncounterParams{..}
 
-server :: Server API
-server = fulfillment
-
 fulFillmentAPI :: Proxy API
 fulFillmentAPI = Proxy
 
-app :: Application
-app = serve fulFillmentAPI server
+server :: Server API
+server = fulfillment
+
+-- server :: ClientEnv -> Server API
+-- server clientEnv = hoistServer fulFillmentAPI (nat clientEnv) fulfillment
+--   where
+--     nat :: HasPokeApi m => ClientEnv -> m a -> Handler a
+--     nat env x = do
+--       a <- runExceptT (runReaderT x env)
+--       case a of
+--         Left err -> error "whatever"
+--         Right r -> return (Right r)
+
+app :: ClientEnv -> Application
+app clientEnv = serve fulFillmentAPI (server clientEnv)
