@@ -56,7 +56,7 @@ fulfillment :: WebhookRequest -> Handler WebhookResponse
 fulfillment req = do
   liftIO $ putStrLn "WebhookRequest!"
   case (intent . queryResult) req of
-    Nothing -> error "No intent" -- TODO: this should obviously not throw an error.
+    Nothing -> error "No intent." -- TODO: this should obviously not throw an error.
     Just intent -> fulfillIntent req (displayName intent)
 
 fulfillIntent :: WebhookRequest -> String -> Handler WebhookResponse
@@ -64,7 +64,7 @@ fulfillIntent req = \case
   "Get types" -> do
     types <- liftIO $ pokeApiWebhookRequest req
     case types of
-      Left err -> error "SomeException"
+      Left err -> error "No type found."
       Right types ->
         return $ createResponse types
   "Get Pokemon location" ->
@@ -76,7 +76,7 @@ fulfillIntent req = \case
   "Get Pokemon location - custom" -> do
     games <- liftIO $ gameLocationWebhookRequest req
     case games of
-      Left err -> error "Error"
+      Left err -> error "No game found."
       Right games -> return $ createFollowupResponse games
 
 
