@@ -10,6 +10,7 @@ module Lib
     ) where
 
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Reader
 import Data.List (intercalate)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
@@ -21,6 +22,7 @@ import PokeApi.Pokemon.Types
 import Servant
 import Servant.Client hiding (Response)
 import Types
+
 
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -52,17 +54,17 @@ extractGameParameter = M.lookup "PokemonGameVersion" . parameters . queryResult
 
 type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] WebhookResponse
 
-fulfillment :: WebhookRequest -> Handler WebhookResponse
+fulfillment :: WebhookRequest -> PokeApi WebhookResponse
 fulfillment req = do
   liftIO $ putStrLn "WebhookRequest!"
   case (intent . queryResult) req of
     Nothing -> error "No intent." -- TODO: this should obviously not throw an error.
     Just intent -> fulfillIntent req (displayName intent)
 
-fulfillIntent :: WebhookRequest -> String -> Handler WebhookResponse
+fulfillIntent :: WebhookRequest -> String -> PokeApi WebhookResponse
 fulfillIntent req = \case
   "Get types" -> do
-    types <- liftIO $ pokeApiWebhookRequest req
+    types <- pokeApiWebhookRequest req
     case types of
       Left err -> error "No type found."
       Right types ->
@@ -74,7 +76,7 @@ fulfillIntent req = \case
         payload = Just $ G.GooglePayload response
      in return $ WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
   "Get Pokemon location - custom" -> do
-    games <- liftIO $ gameLocationWebhookRequest req
+    games <- gameLocationWebhookRequest req
     case games of
       Left err -> error "No game found."
       Right games -> return $ createFollowupResponse games
@@ -100,25 +102,22 @@ createResponse types =
       payload = Just $ G.GooglePayload response
    in WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
 
-pokeApiWebhookRequest :: WebhookRequest -> PokeApi [Type']
+pokeApiWebhookRequest :: WebhookRequest -> PokeApi (ClientResponse [Type'])
 pokeApiWebhookRequest req =
   let typeParam = extractTypeParameter req
       qualifierParam = extractQualifierParameter req
    in
      case (typeParam, qualifierParam) of
        (Just type', Just qualifier) -> do
-         manager <- liftIO $ newManager tlsManagerSettings
          case qualifier of
-           Effective -> effectiveAgainst manager type'
-           Weak -> weakAgainst manager type'
+           Effective -> effectiveAgainst type'
+           Weak -> weakAgainst type'
 
-gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
-gameLocationWebhookRequest req = do
-  manager' <- liftIO $ newManager tlsManagerSettings
-  let clientEnv = mkClientEnv manager' (BaseUrl Https "pokeapi.co" 443 "/api/v2")
-   in case getParams req of
-        Just EncounterParams{..} -> pokemonEncounterByGame clientEnv pkmn game
-        Nothing -> return $ Right []
+gameLocationWebhookRequest :: WebhookRequest -> PokeApi (ClientResponse [String])
+gameLocationWebhookRequest req =
+  case getParams req of
+    Just EncounterParams{..} -> pokemonEncounterByGame pkmn game
+    Nothing -> return $ Right []
 
 getParams :: WebhookRequest -> Maybe EncounterParams
 getParams req = do
@@ -127,11 +126,17 @@ getParams req = do
   pkmn <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
   return EncounterParams{..}
 
-server :: Server API
-server = fulfillment
 
 fulFillmentAPI :: Proxy API
 fulFillmentAPI = Proxy
 
-app :: Application
-app = serve fulFillmentAPI server
+nt :: ClientEnv -> PokeApi a -> Handler a
+nt env x = Handler $ liftIO $ runReaderT x env
+
+server :: ServerT API PokeApi
+server = fulfillment
+
+mainServ env = hoistServer fulFillmentAPI (nt env) server
+
+app :: ClientEnv -> Application
+app env = serve fulFillmentAPI (mainServ env)

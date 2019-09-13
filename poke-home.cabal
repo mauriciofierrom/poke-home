@@ -33,8 +33,8 @@ library
     , mtl
     , pokeapi
     , servant
-    , servant-server
     , servant-client
+    , servant-server
     , text
     , transformers
     , unordered-containers
@@ -60,6 +60,7 @@ executable poke-home-exe
     , poke-home
     , pokeapi
     , servant
+    , servant-client
     , servant-server
     , text
     , transformers
@@ -89,6 +90,7 @@ test-suite poke-home-test
     , pokeapi
     , servant
     , servant-server
+    , servant-client
     , text
     , transformers
     , unordered-containers

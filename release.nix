@@ -9,7 +9,7 @@ let
           pokeapi =
             haskellPackagesNew.callPackage ./pokeapi.nix { };
 
-          dialogflow =
+          dialogflow-fulfillment =
             haskellPackagesNew.callPackage ./dialogflow.nix { };
             };
           };
