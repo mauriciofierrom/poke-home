@@ -1,34 +1,28 @@
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeOperators     #-}
 
-module Lib
-    (
-     app
-    ) where
+module Lib (app) where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Except (except, runExceptT, ExceptT)
 import Control.Monad.Trans.Reader (runReaderT)
-import Control.Monad.Trans.Except (except, mapExceptT, runExceptT, ExceptT)
-import Data.List (intercalate)
-import Network.HTTP.Client (newManager)
-import Network.HTTP.Client.TLS (tlsManagerSettings)
+import PokeApi.Pokemon.Queries
+import PokeApi.Pokemon.Types
 import PokeApi.Types
 import PokeApi.Type.Types
 import PokeApi.Type.Queries
-import PokeApi.Pokemon.Queries
-import PokeApi.Pokemon.Types
+import Data.List (intercalate)
+import Servant.Client (ClientEnv, ClientError)
 import Servant
-import Servant.Client hiding (Response)
-import Types
-
 
 import qualified Data.Map as M
 import qualified Data.Text as T
+
+import Types
 
 import Dialogflow.V2.Fulfillment.Message
 import Dialogflow.V2.Fulfillment.Webhook.Response hiding (outputContexts)
@@ -101,7 +95,7 @@ pokeApiWebhookRequest req =
       qualifierParam = extractQualifierParameter req
    in
      case (typeParam, qualifierParam) of
-       (Just type', Just qualifier) -> do
+       (Just type', Just qualifier) ->
          case qualifier of
            Effective -> effectiveAgainst type'
            Weak -> weakAgainst type'
@@ -118,7 +112,6 @@ getParams req = do
   oCtxs <- outputContexts (queryResult req)
   pkmn <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
   return EncounterParams{..}
-
 
 fulFillmentAPI :: Proxy API
 fulFillmentAPI = Proxy
