@@ -3,6 +3,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Lib
     (
@@ -10,7 +11,9 @@ module Lib
     ) where
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Reader
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Reader (runReaderT)
+import Control.Monad.Trans.Except (except, mapExceptT, runExceptT, ExceptT)
 import Data.List (intercalate)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
@@ -63,24 +66,14 @@ fulfillment req = do
 
 fulfillIntent :: WebhookRequest -> String -> PokeApi WebhookResponse
 fulfillIntent req = \case
-  "Get types" -> do
-    types <- pokeApiWebhookRequest req
-    case types of
-      Left err -> error "No type found."
-      Right types ->
-        return $ createResponse types
+  "Get types" -> createResponse <$> pokeApiWebhookRequest req
   "Get Pokemon location" ->
     let msg = "In what game?"
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing
         response = G.Response True Nothing (G.RichResponse  [G.Item $ G.SimpleResponse speechResponse] [] Nothing)
         payload = Just $ G.GooglePayload response
      in return $ WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
-  "Get Pokemon location - custom" -> do
-    games <- gameLocationWebhookRequest req
-    case games of
-      Left err -> error "No game found."
-      Right games -> return $ createFollowupResponse games
-
+  "Get Pokemon location - custom" -> createFollowupResponse <$> gameLocationWebhookRequest req
 
 createFollowupResponse :: [String] -> WebhookResponse
 createFollowupResponse encounters =
@@ -102,7 +95,7 @@ createResponse types =
       payload = Just $ G.GooglePayload response
    in WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
 
-pokeApiWebhookRequest :: WebhookRequest -> PokeApi (ClientResponse [Type'])
+pokeApiWebhookRequest :: WebhookRequest -> PokeApi [Type']
 pokeApiWebhookRequest req =
   let typeParam = extractTypeParameter req
       qualifierParam = extractQualifierParameter req
@@ -113,11 +106,11 @@ pokeApiWebhookRequest req =
            Effective -> effectiveAgainst type'
            Weak -> weakAgainst type'
 
-gameLocationWebhookRequest :: WebhookRequest -> PokeApi (ClientResponse [String])
+gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
 gameLocationWebhookRequest req =
   case getParams req of
     Just EncounterParams{..} -> pokemonEncounterByGame pkmn game
-    Nothing -> return $ Right []
+    Nothing -> lift . except $ Right []
 
 getParams :: WebhookRequest -> Maybe EncounterParams
 getParams req = do
@@ -131,7 +124,15 @@ fulFillmentAPI :: Proxy API
 fulFillmentAPI = Proxy
 
 nt :: ClientEnv -> PokeApi a -> Handler a
-nt env x = Handler $ liftIO $ runReaderT x env
+nt env x = do
+  sdf <- liftIO . runExceptT $ runReaderT x env
+  Handler $ clientToServerError sdf
+  where
+    clientToServerError :: Either ClientError a -> ExceptT ServerError IO a
+    clientToServerError eca =
+      case eca of
+        Left e -> except . Left $ err300 { errReasonPhrase = show e }
+        Right v -> except (Right v)
 
 server :: ServerT API PokeApi
 server = fulfillment
