@@ -1,7 +1,7 @@
 cabal-version:  2.4
 name:           poke-home
 version:        0.1.0.0
-description:    A virtual assistance that pokes homes with Pakeeman stuff
+description:    A virtual assistant that pokes homes with Poke stuff
 homepage:       https://github.com/mauriciofierrom/poke-home#readme
 bug-reports:    https://github.com/mauriciofierrom/poke-home/issues
 author:         Mauricio Fierro
