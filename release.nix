@@ -10,7 +10,7 @@ let
             haskellPackagesNew.callPackage ./pokeapi.nix { };
 
           dialogflow-fulfillment =
-            haskellPackagesNew.callPackage ./dialogflow.nix { };
+            haskellPackagesNew.callPackage ./dialogflow-fulfillment.nix { };
             };
           };
         };
