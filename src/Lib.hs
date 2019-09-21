@@ -10,11 +10,9 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (except, runExceptT, ExceptT)
 import Control.Monad.Trans.Reader (runReaderT)
-import PokeApi.Pokemon.Queries
-import PokeApi.Pokemon.Types
-import PokeApi.Types
-import PokeApi.Type.Types
-import PokeApi.Type.Queries
+import PokeApi.Common
+import PokeApi.Pokemon
+import PokeApi.Type
 import Data.List (intercalate)
 import Servant.Client (ClientEnv, ClientError)
 import Servant
@@ -103,14 +101,14 @@ pokeApiWebhookRequest req =
 gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
 gameLocationWebhookRequest req =
   case getParams req of
-    Just EncounterParams{..} -> pokemonEncounterByGame pkmn game
+    Just EncounterParams{..} -> pokemonEncounterByGame name game
     Nothing -> lift . except $ Right []
 
 getParams :: WebhookRequest -> Maybe EncounterParams
 getParams req = do
   game <- extractGameParameter req
   oCtxs <- outputContexts (queryResult req)
-  pkmn <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
+  name <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
   return EncounterParams{..}
 
 fulFillmentAPI :: Proxy API
