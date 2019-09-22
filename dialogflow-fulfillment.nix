@@ -4,11 +4,11 @@
 }:
 mkDerivation {
   pname = "dialogflow-fulfillment";
-  version = "0.0.1.0";
+  version = "0.1.0.0";
   src = fetchgit {
     url = "https://github.com/mauriciofierrom/dialogflow-fulfillment.git";
-    sha256 = "136n6q0bdvxlb3in89dq0g254bni461wkfznbgkpyp92dqhgyasn";
-    rev = "2f46ecc798476fe4ed5dc1cf02eb7629e0b1d66b";
+    sha256 = "1pb35bp7jk6qf6dky6rg5n4ngs6sbywdxbgygaiivwxa2b205cs0";
+    rev = "cc4507f17769638161bc9d08ddf8c70ad5c7161f";
     fetchSubmodules = true;
   };
   libraryHaskellDepends = [
