@@ -17,7 +17,9 @@ extra-source-files:
 library
   exposed-modules:
       Lib
+      LocationIntent
       Types
+      TypeIntent
   other-modules:
       Paths_poke_home
   hs-source-dirs:

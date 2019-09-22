@@ -1,51 +1,24 @@
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
 
 module Lib (app) where
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (except, runExceptT, ExceptT)
 import Control.Monad.Trans.Reader (runReaderT)
+import Dialogflow.V2.Fulfillment.Message
+import Dialogflow.V2.Fulfillment.Webhook.Request
+import Dialogflow.V2.Fulfillment.Webhook.Response hiding (outputContexts)
 import PokeApi.Common
-import PokeApi.Pokemon
-import PokeApi.Type
-import Data.List (intercalate)
 import Servant.Client (ClientEnv, ClientError)
 import Servant
 
-import qualified Data.Map as M
-import qualified Data.Text as T
-
-import Types
-
-import Dialogflow.V2.Fulfillment.Message
-import Dialogflow.V2.Fulfillment.Webhook.Response hiding (outputContexts)
-
 import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
-import Dialogflow.V2.Fulfillment.Webhook.Request
 
-
-extractTypeParameter ::  WebhookRequest -> Maybe Type'
-extractTypeParameter req = do
-  typeParam <- (M.lookup "PokemonType" . parameters . queryResult) req
-  getType (T.pack typeParam)
-
-extractQualifierParameter :: WebhookRequest -> Maybe Qualifier
-extractQualifierParameter  req = do
-  typeParam <- (M.lookup "Quality" . parameters . queryResult) req
-  getQualifier typeParam
-    where
-      getQualifier :: String -> Maybe Qualifier
-      getQualifier "weak" = Just Weak
-      getQualifier "effective" = Just Effective
-      getQualifier _ = Nothing
-
-extractGameParameter :: WebhookRequest -> Maybe String
-extractGameParameter = M.lookup "PokemonGameVersion" . parameters . queryResult
+import TypeIntent
+import LocationIntent
 
 type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] WebhookResponse
 
@@ -58,7 +31,7 @@ fulfillment req = do
 
 fulfillIntent :: WebhookRequest -> String -> PokeApi WebhookResponse
 fulfillIntent req = \case
-  "Get types" -> createResponse <$> pokeApiWebhookRequest req
+  "Get types" -> createTypeResponse <$> pokeApiWebhookRequest req
   "Get Pokemon location" ->
     let msg = "In what game?"
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing
@@ -66,50 +39,6 @@ fulfillIntent req = \case
         payload = Just $ G.GooglePayload response
      in return $ WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
   "Get Pokemon location - custom" -> createFollowupResponse <$> gameLocationWebhookRequest req
-
-createFollowupResponse :: [String] -> WebhookResponse
-createFollowupResponse encounters =
-  let msg = intercalate " and " encounters
-      speechResponse = SimpleResponse (TextToSpeech msg) Nothing
-      response = G.Response False Nothing (G.RichResponse [G.Item $ G.SimpleResponse speechResponse] [] Nothing)
-      payload = Just $ G.GooglePayload response
-   in WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
-
-createResponse :: [Type'] -> WebhookResponse
-createResponse types =
-  let types' = fmap getTypeName types
-      msg = T.unpack $ T.intercalate " and " types'
-      speechResponse = SimpleResponse (TextToSpeech msg) (Just msg)
-      image = G.Image "https://avatars0.githubusercontent.com/u/180308" "desc" Nothing Nothing
-      cardContent = G.BasicCardImage image
-      basicCard = G.BasicCard (Just "Le title") (Just "Le subtitle") cardContent [] G.DEFAULT
-      response = G.Response False Nothing (G.RichResponse [G.Item $ G.SimpleResponse speechResponse, G.Item basicCard] [] Nothing)
-      payload = Just $ G.GooglePayload response
-   in WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
-
-pokeApiWebhookRequest :: WebhookRequest -> PokeApi [Type']
-pokeApiWebhookRequest req =
-  let typeParam = extractTypeParameter req
-      qualifierParam = extractQualifierParameter req
-   in
-     case (typeParam, qualifierParam) of
-       (Just type', Just qualifier) ->
-         case qualifier of
-           Effective -> effectiveAgainst type'
-           Weak -> weakAgainst type'
-
-gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
-gameLocationWebhookRequest req =
-  case getParams req of
-    Just EncounterParams{..} -> pokemonEncounterByGame name game
-    Nothing -> lift . except $ Right []
-
-getParams :: WebhookRequest -> Maybe EncounterParams
-getParams req = do
-  game <- extractGameParameter req
-  oCtxs <- outputContexts (queryResult req)
-  name <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
-  return EncounterParams{..}
 
 fulFillmentAPI :: Proxy API
 fulFillmentAPI = Proxy
