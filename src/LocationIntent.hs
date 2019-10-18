@@ -19,8 +19,8 @@ import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
 extractGameParameter :: WebhookRequest -> Maybe String
 extractGameParameter = M.lookup "PokemonGameVersion" . parameters . queryResult
 
-getParams :: WebhookRequest -> Maybe EncounterParams
-getParams req = do
+extractEncounterParams :: WebhookRequest -> Maybe EncounterParams
+extractEncounterParams req = do
   game <- extractGameParameter req
   oCtxs <- outputContexts (queryResult req)
   name <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
@@ -28,7 +28,7 @@ getParams req = do
 
 gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]
 gameLocationWebhookRequest req =
-  case getParams req of
+  case extractEncounterParams req of
     Just EncounterParams{..} -> pokemonEncounterByGame name game
     Nothing -> lift . except $ Right []
 

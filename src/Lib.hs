@@ -20,7 +20,6 @@ import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
 import TypeIntent
 import LocationIntent
 
-data Qualifier = Weak | Effective deriving (Eq, Show)
 
 type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] WebhookResponse
 
@@ -33,7 +32,7 @@ fulfillment req = do
 
 fulfillIntent :: WebhookRequest -> String -> PokeApi WebhookResponse
 fulfillIntent req = \case
-  "Get types" -> createTypeResponse <$> pokeApiWebhookRequest req
+  "Get types" -> createTypeResponse <$> typeWebhookRequest req
   "Get Pokemon location" ->
     let msg = "In what game?"
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing

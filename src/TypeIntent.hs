@@ -34,8 +34,8 @@ createTypeResponse types =
                       Nothing
                       Nothing
 
-pokeApiWebhookRequest :: WebhookRequest -> PokeApi [Type']
-pokeApiWebhookRequest req =
+typeWebhookRequest :: WebhookRequest -> PokeApi [Type']
+typeWebhookRequest req =
   let typeParam = extractTypeParameter req
       qualifierParam = extractQualifierParameter req
   in case (typeParam, qualifierParam) of
