@@ -13,7 +13,7 @@ import Dialogflow.V2.Fulfillment.Webhook.Request
 import Dialogflow.V2.Fulfillment.Message
 import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
 
-import Types
+data Qualifier = Weak | Effective deriving (Eq, Show)
 
 extractTypeParameter ::  WebhookRequest -> Maybe Type'
 extractTypeParameter req = do

@@ -20,6 +20,8 @@ import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
 import TypeIntent
 import LocationIntent
 
+data Qualifier = Weak | Effective deriving (Eq, Show)
+
 type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] WebhookResponse
 
 fulfillment :: WebhookRequest -> PokeApi WebhookResponse
