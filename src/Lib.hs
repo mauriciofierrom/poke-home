@@ -20,14 +20,13 @@ import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
 import TypeIntent
 import LocationIntent
 
-
 type API = "fulfillment" :> ReqBody '[JSON] WebhookRequest :> Post '[JSON] WebhookResponse
 
 fulfillment :: WebhookRequest -> PokeApi WebhookResponse
 fulfillment req = do
   liftIO $ putStrLn "WebhookRequest!"
   case (intent . queryResult) req of
-    Nothing -> error "No intent." -- TODO: this should obviously not throw an error.
+    Nothing -> error "No intent."
     Just intent -> fulfillIntent req (displayName intent)
 
 fulfillIntent :: WebhookRequest -> String -> PokeApi WebhookResponse
@@ -38,7 +37,12 @@ fulfillIntent req = \case
         speechResponse = SimpleResponse (TextToSpeech msg) Nothing
         response = G.Response True Nothing (G.RichResponse  [G.Item $ G.SimpleResponse speechResponse] [] Nothing)
         payload = Just $ G.GooglePayload response
-     in return $ WebhookResponse (Just msg) (Just [Message $ SimpleResponses [speechResponse]]) (Just "mauriciofierro.dev") payload Nothing Nothing
+     in return $ WebhookResponse (Just msg)
+                                 (Just [Message $ SimpleResponses [speechResponse]])
+                                 (Just "mauriciofierro.dev")
+                                 payload
+                                 Nothing
+                                 Nothing
   "Get Pokemon location - custom" -> createFollowupResponse <$> gameLocationWebhookRequest req
 
 fulFillmentAPI :: Proxy API

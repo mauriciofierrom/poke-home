@@ -3,17 +3,17 @@
 
 module LocationIntent where
 
-import PokeApi.Pokemon
+
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (except)
-import Data.List (intercalate)
-import qualified Data.Map as M
-
-import PokeApi.Common
+import Dialogflow.V2.Fulfillment.Message
 import Dialogflow.V2.Fulfillment.Webhook.Response hiding (outputContexts)
 import Dialogflow.V2.Fulfillment.Webhook.Request
+import Data.List (intercalate)
+import PokeApi.Pokemon
+import PokeApi.Common
 
-import Dialogflow.V2.Fulfillment.Message
+import qualified Data.Map as M
 import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
 
 extractGameParameter :: WebhookRequest -> Maybe String

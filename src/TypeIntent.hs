@@ -43,7 +43,7 @@ typeWebhookRequest req =
           case qualifier of
             Effective -> effectiveAgainst type'
             Weak -> weakAgainst type'
-        _ -> error "Failed. Change this error!" -- TODO: Handle this case properly
+        _ -> error "Failed!"
 
 extractQualifierParameter :: WebhookRequest -> Maybe Qualifier
 extractQualifierParameter  req = do
