@@ -6,6 +6,7 @@ module LocationIntent where
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (except)
+import Data.Aeson (Value(String))
 import Dialogflow.V2.Fulfillment.Message
 import Dialogflow.V2.Fulfillment.Webhook.Response hiding (outputContexts)
 import Dialogflow.V2.Fulfillment.Webhook.Request
@@ -14,6 +15,7 @@ import PokeApi.Pokemon
 import PokeApi.Common
 
 import qualified Data.Map as M
+import qualified Data.Text as T
 import qualified Dialogflow.V2.Fulfillment.Payload.Google as G
 
 extractGameParameter :: WebhookRequest -> Maybe String
@@ -23,7 +25,10 @@ extractEncounterParams :: WebhookRequest -> Maybe EncounterParams
 extractEncounterParams req = do
   game <- extractGameParameter req
   oCtxs <- outputContexts (queryResult req)
-  name <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
+  v <- getContextParameter oCtxs (session req <> "/contexts/getpokemonlocation-followup") "Pokemon"
+  name <- case v of
+               String t -> Just $ T.unpack t
+               _ -> Nothing
   return EncounterParams{..}
 
 gameLocationWebhookRequest :: WebhookRequest -> PokeApi [String]

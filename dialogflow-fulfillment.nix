@@ -4,11 +4,11 @@
 }:
 mkDerivation {
   pname = "dialogflow-fulfillment";
-  version = "0.1.0.0";
+  version = "0.1.1.4";
   src = fetchgit {
-    url = "https://github.com/mauriciofierrom/dialogflow-fulfillment.git";
-    sha256 = "1pb35bp7jk6qf6dky6rg5n4ngs6sbywdxbgygaiivwxa2b205cs0";
-    rev = "cc4507f17769638161bc9d08ddf8c70ad5c7161f";
+    url = "https://github.com/mauriciofierrom/dialogflow-fulfillment";
+    sha256 = "0whzji9sxvd70jj5ygadhd5c392l66jl48a8xsl9kl8p0b0crrb6";
+    rev = "2840ec45ffe3ae63e7b11158b1d373b39d73796f";
     fetchSubmodules = true;
   };
   libraryHaskellDepends = [
@@ -16,7 +16,7 @@ mkDerivation {
   ];
   testHaskellDepends = [
     aeson aeson-pretty base bytestring containers directory hspec
-    hspec-discover
+    hspec-discover unordered-containers
   ];
   testToolDepends = [ hspec-discover ];
   homepage = "https://github.com/mauriciofierrom/dialogflow-fulfillment";

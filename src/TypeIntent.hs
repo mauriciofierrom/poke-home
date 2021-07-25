@@ -2,6 +2,7 @@
 
 module TypeIntent where
 
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Map as M
 import qualified Data.Text as T
 
@@ -35,15 +36,16 @@ createTypeResponse types =
                       Nothing
 
 typeWebhookRequest :: WebhookRequest -> PokeApi [Type']
-typeWebhookRequest req =
+typeWebhookRequest req = do
+  liftIO $ print req
   let typeParam = extractTypeParameter req
       qualifierParam = extractQualifierParameter req
-  in case (typeParam, qualifierParam) of
-        (Just type', Just qualifier) ->
-          case qualifier of
-            Effective -> effectiveAgainst type'
-            Weak -> weakAgainst type'
-        _ -> error "Failed!"
+  case (typeParam, qualifierParam) of
+    (Just type', Just qualifier) ->
+      case qualifier of
+        Effective -> effectiveAgainst type'
+        Weak -> weakAgainst type'
+    _ -> error "Failed!"
 
 extractQualifierParameter :: WebhookRequest -> Maybe Qualifier
 extractQualifierParameter  req = do

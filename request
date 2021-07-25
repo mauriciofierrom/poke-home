@@ -3,7 +3,7 @@
   "queryResult": {
     "queryText": "poison weak",
     "parameters": {
-      "PokemonType": "",
+      "PokemonType": "Poison",
       "Quality": "weak"
     },
     "allRequiredParamsPresent": true,
